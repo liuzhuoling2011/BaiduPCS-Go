@@ -3,7 +3,7 @@ package pcsweb
 import (
 	"fmt"
 	"github.com/bitly/go-simplejson"
-	"github.com/iikira/Baidu-Login"
+	baidulogin "github.com/iikira/Baidu-Login"
 	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
 	"github.com/iikira/BaiduPCS-Go/internal/pcsfunctions/pcscaptcha"
 	"golang.org/x/net/websocket"
@@ -76,13 +76,12 @@ func WSLogin(conn *websocket.Conn, rJson *simplejson.Json) (err error) {
 			if lj.ErrInfo.No == "500002" {
 				if vcode != "" {
 					sendResponse(conn, 1, 4, "验证码错误", "")
-				} else {
-					lj = bc.BaiduLogin(username, password, "ABCD", vcodestr)
 				}
 			}
 			vcodestr = lj.Data.CodeString
 			if vcodestr == "" {
-				err = fmt.Errorf("未找到codeString")
+				err = fmt.Errorf("未找到codeString，无法生成验证码")
+				sendErrorResponse(conn, -1, err.Error())
 				return err
 			}
 
@@ -133,6 +132,9 @@ func WSDownload(conn *websocket.Conn, rJson *simplejson.Json) (err error) {
 			options.IsLocateDownload = true
 		} else if dtype == "stream" {
 			options.IsStreaming = true
+		} else {
+			// 默认采用locate下载
+			options.IsLocateDownload = true
 		}
 
 		RunDownload(conn, paths, options)
