@@ -1,4 +1,5 @@
 # BaiduPCS-WEB的后维护版本
+请前往 https://github.com/Erope/BaiduPCS-Go
 
 ## 介绍
 
