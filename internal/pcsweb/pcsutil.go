@@ -2,19 +2,22 @@ package pcsweb
 
 import (
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/baidupcs"
-	"github.com/iikira/BaiduPCS-Go/internal/pcscommand"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/pcsverbose"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/Erope/BaiduPCS-Go/baidupcs"
+	"github.com/Erope/BaiduPCS-Go/internal/pcscommand"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsconfig"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/pcsverbose"
 )
 
 var (
@@ -74,8 +77,10 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	bduss := r.Form.Get("bduss")
 	if bduss == "" { // CheckLock
 		if GlobalSessions.CheckLock(w, r) {
+			fmt.Println("当前未登录，需要进行登录")
 			sendHttpErrorResponse(w, -3, "需要解锁")
 		} else {
+			fmt.Println("已经登录，无需再次登录")
 			sendHttpResponse(w, "无需解锁", "")
 		}
 		return
@@ -83,6 +88,7 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 
 	b, err := pcsconfig.Config.SetupUserByBDUSS(bduss, "", "")
 	if err != nil {
+		fmt.Println("BDUSS登录失败...")
 		sendHttpErrorResponse(w, -2, "BDUSS登录失败: "+err.Error())
 		return
 	}
@@ -99,6 +105,33 @@ func LoginHandle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendHttpResponse(w, "账户登录成功", b)
+}
+
+func bdHandle(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	path = strings.TrimPrefix(path, "/bd/")
+	path = strings.Replace(path, "http:/", "http://", 1)
+	path = strings.Replace(path, "https:/", "https://", 1)
+	remote, err := url.Parse(path)
+	if err != nil {
+		panic(err)
+	}
+	r.URL.Host = remote.Host
+	r.URL.Path = remote.Path
+	r.URL.Scheme = remote.Scheme
+	r.Host = remote.Host
+	remote.Path = ""
+	if r.Header.Get("range") != "" || r.Header.Get("Range") != "" {
+		http.Redirect(w, r, path+"?"+r.URL.RawQuery, http.StatusMovedPermanently)
+		return
+	} else {
+		r.Method = "GET"
+		r.Header.Add("Range", "bytes=0-0")
+	}
+	if strings.HasSuffix(remote.Host, ".baidupcs.com") {
+		proxy := httputil.NewSingleHostReverseProxy(remote)
+		proxy.ServeHTTP(w, r)
+	}
 }
 
 func UserHandle(w http.ResponseWriter, r *http.Request) {
@@ -335,59 +368,59 @@ func OptionsHandle(w http.ResponseWriter, r *http.Request) {
 		if rtype == "download" {
 			opts := config.DownloadOpts()
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "no_check",
-				Value:  opts.NoCheck,
-				Desc:   "下载文件完成后不校验文件",
+				Name:  "no_check",
+				Value: opts.NoCheck,
+				Desc:  "下载文件完成后不校验文件",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "overwrite",
-				Value:  opts.IsOverwrite,
-				Desc:   "下载时覆盖已存在的文件",
+				Name:  "overwrite",
+				Value: opts.IsOverwrite,
+				Desc:  "下载时覆盖已存在的文件",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "add_x",
-				Value:  opts.IsExecutedPermission,
-				Desc:   "为文件加上执行权限, (windows系统无效)",
+				Name:  "add_x",
+				Value: opts.IsExecutedPermission,
+				Desc:  "为文件加上执行权限, (windows系统无效)",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "stream",
-				Value:  opts.IsStreaming,
-				Desc:   "以流式文件的方式下载",
+				Name:  "stream",
+				Value: opts.IsStreaming,
+				Desc:  "以流式文件的方式下载",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "share",
-				Value:  opts.IsShareDownload,
-				Desc:   "以分享文件的方式获取下载链接来下载",
+				Name:  "share",
+				Value: opts.IsShareDownload,
+				Desc:  "以分享文件的方式获取下载链接来下载",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "locate",
-				Value:  opts.IsLocateDownload,
-				Desc:   "以获取直链的方式来下载",
+				Name:  "locate",
+				Value: opts.IsLocateDownload,
+				Desc:  "以获取直链的方式来下载",
 			})
 			configJsons = append(configJsons, pcsOptsJSON{
-				Name:   "locate_pan",
-				Value:  opts.IsLocatePanAPIDownload,
-				Desc:   "从百度网盘首页获取直链来下载, 该下载方式需配合第三方服务器, 机密文件切勿使用此下载方式",
+				Name:  "locate_pan",
+				Value: opts.IsLocatePanAPIDownload,
+				Desc:  "从百度网盘首页获取直链来下载, 该下载方式需配合第三方服务器, 机密文件切勿使用此下载方式",
 			})
 			sendHttpResponse(w, "", configJsons)
 		}
 	}
 	if rmethod == "set" {
 		if rtype == "download" {
-			no_check , _ := strconv.ParseBool(r.Form.Get("no_check"))
-			overwrite , _ := strconv.ParseBool(r.Form.Get("overwrite"))
-			add_x , _ := strconv.ParseBool(r.Form.Get("add_x"))
-			stream , _ := strconv.ParseBool(r.Form.Get("stream"))
-			share , _ := strconv.ParseBool(r.Form.Get("share"))
-			locate , _ := strconv.ParseBool(r.Form.Get("locate"))
-			locate_pan , _ := strconv.ParseBool(r.Form.Get("locate_pan"))
+			no_check, _ := strconv.ParseBool(r.Form.Get("no_check"))
+			overwrite, _ := strconv.ParseBool(r.Form.Get("overwrite"))
+			add_x, _ := strconv.ParseBool(r.Form.Get("add_x"))
+			stream, _ := strconv.ParseBool(r.Form.Get("stream"))
+			share, _ := strconv.ParseBool(r.Form.Get("share"))
+			locate, _ := strconv.ParseBool(r.Form.Get("locate"))
+			locate_pan, _ := strconv.ParseBool(r.Form.Get("locate_pan"))
 			opt := pcsconfig.CDownloadOptions{
-				NoCheck: no_check,
-				IsOverwrite: overwrite,
-				IsExecutedPermission: add_x,
-				IsStreaming: stream,
-				IsShareDownload: share,
-				IsLocateDownload: locate,
+				NoCheck:                no_check,
+				IsOverwrite:            overwrite,
+				IsExecutedPermission:   add_x,
+				IsStreaming:            stream,
+				IsShareDownload:        share,
+				IsLocateDownload:       locate,
 				IsLocatePanAPIDownload: locate_pan,
 			}
 			config.SetDownloadOpts(opt)
@@ -426,8 +459,8 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 		configJsons = append(configJsons, pcsConfigJSON{
 			Name:   "下载缓存",
 			EnName: "cache_size",
-			Value:  strconv.Itoa(config.CacheSize),
-			Desc:   "建议1024 ~ 262144, 如果硬盘占用高或下载速度慢, 请尝试调大此值",
+			Value:  converter.ConvertFileSize(int64(config.CacheSize), 2),
+			Desc:   "建议1KB ~ 256KB, 单位不区分大小写(如64KB, 1MB, 32kb, 65536b, 65536), 如果硬盘占用高或下载速度慢, 请尝试调大此值",
 		})
 		configJsons = append(configJsons, pcsConfigJSON{
 			Name:   "下载最大并发量",
@@ -436,11 +469,29 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 			Desc:   "建议50 ~ 500. 单任务下载最大线程数量",
 		})
 		configJsons = append(configJsons, pcsConfigJSON{
+			Name:   "上传最大并发量",
+			EnName: "max_upload_parallel",
+			Value:  strconv.Itoa(config.MaxUploadParallel),
+			Desc:   "建议1 ~ 100. 单任务上传最大线程数量",
+		})
+		configJsons = append(configJsons, pcsConfigJSON{
 			Name:   "同时下载数量",
 			EnName: "max_download_load",
 			Value:  strconv.Itoa(config.MaxDownloadLoad),
 			Desc:   "建议 1 ~ 5, 同时进行下载文件的最大数量",
 		})
+		configJsons = append(configJsons, pcsConfigJSON{
+			Name:   "限制最大下载速度",
+			EnName: "max_download_rate",
+			Value:  converter.ConvertFileSize(int64(config.MaxDownloadRate), 2) + "/s",
+			Desc:   "0代表不限制, 单位为每秒的传输速率(如2MB/s, 2MB, 2m, 2mb, 2097152b, 2097152, 后缀'/s' 可省略)",
+		})
+		configJsons = append(configJsons, pcsConfigJSON{
+			Name:   "限制最大上传速度",
+			EnName: "max_upload_rate",
+			Value:  converter.ConvertFileSize(int64(config.MaxUploadRate), 2) + "/s",
+			Desc:   "0代表不限制, 单位为每秒的传输速率(如 2MB/s, 2MB, 2m, 2mb, 2097152b, 2097152, 后缀'/s' 可省略)",
+		})		
 		configJsons = append(configJsons, pcsConfigJSON{
 			Name:   "下载目录",
 			EnName: "savedir",
@@ -486,7 +537,13 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		cache_size := r.Form.Get("cache_size")
-		int_value, _ = strconv.Atoi(cache_size)
+		byte_size, err := converter.ParseFileSizeStr(cache_size)
+		if err != nil {
+			sendHttpErrorResponse(w, -1, "设置 cache_size 错误")
+			config.Save()
+			return
+		}
+		int_value = int(byte_size)
 		if int_value != config.CacheSize {
 			config.CacheSize = int_value
 		}
@@ -503,8 +560,30 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 			config.MaxDownloadLoad = int_value
 		}
 
+		max_upload_parallel := r.Form.Get("max_upload_parallel")
+		int_value, _ = strconv.Atoi(max_upload_parallel)
+		if int_value != config.MaxUploadParallel {
+			config.MaxUploadParallel = int_value
+		}
+
+		max_download_rate := r.Form.Get("max_download_rate")
+		err = pcsconfig.Config.SetMaxDownloadRateByStr(max_download_rate)
+		if err != nil {
+			sendHttpErrorResponse(w, -1, "设置 max_download_rate 错误")
+			config.Save()
+			return
+		}
+		
+		max_upload_rate := r.Form.Get("max_upload_rate")
+		err = pcsconfig.Config.SetMaxUploadRateByStr(max_upload_rate)
+		if err != nil {
+			sendHttpErrorResponse(w, -1, "设置 max_upload_rate 错误")
+			config.Save()
+			return
+		}
+
 		savedir := r.Form.Get("savedir")
-		_, err := ioutil.ReadDir(savedir)
+		_, err = ioutil.ReadDir(savedir)
 		if err != nil {
 			sendHttpErrorResponse(w, -1, "输入的本地文件夹路径错误，请检查目录是否存在或者具有可写权限")
 			config.Save()
@@ -519,10 +598,11 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 			config.Save()
 			return
 		}
+
 		config.Save()
 	}
 	if rmethod == "update" {
-		url := "http://www.zoranjojo.top:9925/api/v1/update?goos=" + runtime.GOOS + "&goarch=" + runtime.GOARCH + "&version=" + Version
+		/* url := "http://www.zoranjojo.top:9925/api/v1/update?goos=" + runtime.GOOS + "&goarch=" + runtime.GOARCH + "&version=" + Version
 		resp, err := http.Get(url)
 		if err != nil {
 			sendHttpErrorResponse(w, -1, "查找版本更新失败")
@@ -533,10 +613,11 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			sendHttpErrorResponse(w, -2, "查找版本更新失败")
 		}
-		sendHttpResponse(w, "", string(body))
+		sendHttpResponse(w, "", string(body)) */
+		sendHttpErrorResponse(w, -1, "关闭在线更新通道")
 	}
 	if rmethod == "notice" {
-		url := "http://www.zoranjojo.top:9925/api/v1/notice"
+		/* url := "http://www.zoranjojo.top:9925/api/v1/notice"
 		resp, err := http.Get(url)
 		if err != nil {
 			sendHttpErrorResponse(w, -1, "查找通知信息失败")
@@ -548,7 +629,8 @@ func SettingHandle(w http.ResponseWriter, r *http.Request) {
 			sendHttpErrorResponse(w, -2, "查找通知信息失败")
 		}
 
-		sendHttpResponse(w, "", string(body))
+		sendHttpResponse(w, "", string(body)) */
+		sendHttpErrorResponse(w, -1, "关闭在线通知")
 	}
 }
 

@@ -2,11 +2,11 @@ package uploader
 
 import (
 	"context"
-	"github.com/iikira/BaiduPCS-Go/pcsutil"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/requester"
-	"github.com/iikira/BaiduPCS-Go/requester/rio"
-	"github.com/iikira/BaiduPCS-Go/requester/rio/speeds"
+	"github.com/Erope/BaiduPCS-Go/pcsutil"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/requester"
+	"github.com/Erope/BaiduPCS-Go/requester/rio"
+	"github.com/Erope/BaiduPCS-Go/requester/rio/speeds"
 	"sync"
 	"time"
 )

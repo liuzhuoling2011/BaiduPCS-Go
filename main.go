@@ -9,16 +9,16 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/iikira/BaiduPCS-Go/baidupcs"
-	"github.com/iikira/BaiduPCS-Go/internal/pcscommand"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
-	_ "github.com/iikira/BaiduPCS-Go/internal/pcsinit"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsweb"
-	"github.com/iikira/BaiduPCS-Go/pcstable"
-	"github.com/iikira/BaiduPCS-Go/pcsutil"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/checksum"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/pcsverbose"
+	"github.com/Erope/BaiduPCS-Go/baidupcs"
+	"github.com/Erope/BaiduPCS-Go/internal/pcscommand"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsconfig"
+	_ "github.com/Erope/BaiduPCS-Go/internal/pcsinit"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsweb"
+	"github.com/Erope/BaiduPCS-Go/pcstable"
+	"github.com/Erope/BaiduPCS-Go/pcsutil"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/checksum"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/pcsverbose"
 	"github.com/olekukonko/tablewriter"
 	"github.com/urfave/cli"
 )
@@ -44,7 +44,7 @@ const (
 
 var (
 	// Version 版本号
-	Version = "v3.7.0"
+	Version = "v3.7.3"
 
 	historyFilePath = filepath.Join(pcsconfig.GetConfigDir(), "pcs_command_history.txt")
 	reloadFn        = func(c *cli.Context) error {
@@ -90,10 +90,13 @@ func init() {
 
 func main() {
 	defer pcsconfig.Config.Close()
-
 	app := cli.NewApp()
 	app.Name = "BaiduPCS-Go"
 	app.Version = Version
+	zponds := cli.Author{
+		Name:  "zponds",
+		Email: "wjhjd163@gmail.com",
+	}
 	liuzhuoling := cli.Author{
 		Name:  "liuzhuoling",
 		Email: "liuzhuoling2011@hotmail.com",
@@ -102,7 +105,7 @@ func main() {
 		Name:  "iikira",
 		Email: "i@mail.iikira.com",
 	}
-	app.Authors = []cli.Author{liuzhuoling, iikira}
+	app.Authors = []cli.Author{liuzhuoling, iikira, zponds}
 	app.Description = "BaiduPCS-Go 使用Go语言编写的百度网盘命令行客户端, 可以让你高效的使用百度云"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -111,8 +114,40 @@ func main() {
 			EnvVar:      pcsverbose.EnvVerbose,
 			Destination: &pcsverbose.IsVerbose,
 		},
+		cli.BoolFlag{
+			Name:        "aria2, a",
+			Usage:       "启用aria2下载，停用自带下载",
+			Destination: &pcsweb.Aria2,
+		},
+		cli.StringFlag{
+			Name:        "aria2url, au",
+			Usage:       "aria2的url",
+			Value:       "http://localhost:6800/jsonrpc",
+			Destination: &pcsweb.Aria2_Url,
+		},
+		cli.StringFlag{
+			Name:        "aria2secret, as",
+			Usage:       "aria2-RPC的secret，默认为空",
+			Value:       "",
+			Destination: &pcsweb.Aria2_Secret,
+		},
+		cli.StringFlag{
+			Name:        "aria2pre, ap",
+			Usage:       "aria2-RPC添加下载链接时附加在前面的前缀，用于解决可能出现下载时的403问题和拉黑后无法下载问题，默认为空，注意，前缀是以Aria2服务器为起始点的!例子: http://localhost:5299/bd/",
+			Value:       "",
+			Destination: &pcsweb.Aria2_prefix,
+		},
+		cli.StringFlag{
+			Name:        "pdurl, pd",
+			Usage:       "使用 https://github.com/TkzcM/baiduwp 搭建的Pandownload搭建网站加速下载的网址，如 https://pandl.live/ ，注意需要输入开头的https或http和末尾的/，默认不使用",
+			Value:       "",
+			Destination: &pcsweb.PD_Url,
+		},
 	}
 	app.Action = func(c *cli.Context) {
+		if pcsweb.Aria2 {
+			fmt.Printf("已经启用Aria2下载，停用默认下载，下载列表会为空，仍在开发中，可能不稳定\n")
+		}
 		fmt.Printf("打开浏览器, 输入 http://localhost:5299 查看效果\n")
 		//对于Windows和Mac，调用系统默认浏览器打开 http://localhost:5299
 		var cmd *exec.Cmd
@@ -194,7 +229,7 @@ func main() {
 				常规登录:
 					按提示一步一步来即可.
 				百度BDUSS获取方法:
-					参考这篇 Wiki: https://github.com/iikira/BaiduPCS-Go/wiki/关于-获取百度-BDUSS
+					参考这篇 Wiki: https://github.com/Erope/BaiduPCS-Go/wiki/关于-获取百度-BDUSS
 					或者百度搜索: 获取百度BDUSS
 			`,
 			Category: "百度帐号",

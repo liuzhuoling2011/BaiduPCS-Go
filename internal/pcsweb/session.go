@@ -4,12 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
 	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/Erope/BaiduPCS-Go/internal/pcsconfig"
 )
 
 //session存储方式接口
@@ -127,12 +128,12 @@ func (manager *Manager) GC() {
 	manager.lock.Lock()
 	defer manager.lock.Unlock()
 	manager.provider.SessionGC(manager.maxLifeTime)
-	time.AfterFunc(time.Second * time.Duration(manager.maxLifeTime), func() { manager.GC() })
+	time.AfterFunc(time.Second*time.Duration(manager.maxLifeTime), func() { manager.GC() })
 }
 
 func (manager *Manager) Init() {
 	for k, v := range pcsconfig.SessionMap {
-		if time.Now().Sub(v.LastAccessedTime) >= time.Hour * 24 {
+		if time.Now().Sub(v.LastAccessedTime) >= time.Hour*24 {
 			delete(pcsconfig.SessionMap, k)
 		} else {
 			session, _ := manager.provider.SessionRead(k)
@@ -192,5 +193,3 @@ func (manager *Manager) WebSocketUnLock(r *http.Request) {
 	}
 	pcsconfig.Config.Save()
 }
-
-

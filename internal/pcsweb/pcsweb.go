@@ -3,14 +3,20 @@ package pcsweb
 
 import (
 	"fmt"
-	"github.com/GeertJohan/go.rice"
-	"golang.org/x/net/websocket"
 	"html/template"
 	"net/http"
+
+	rice "github.com/GeertJohan/go.rice"
+	"golang.org/x/net/websocket"
 )
 
 var distBox *rice.Box
 var distMobileBox *rice.Box
+var Aria2 bool
+var Aria2_Url string
+var Aria2_Secret string
+var Aria2_prefix string
+var PD_Url string
 
 // StartServer 开启web服务
 func StartServer(port uint, access bool) error {
@@ -23,7 +29,6 @@ func StartServer(port uint, access bool) error {
 
 	distMobileBox = rice.MustFindBox("dist_mobile") // go.rice 文件盒子
 	http.Handle("/dist_mobile/", http.StripPrefix("/dist_mobile/", http.FileServer(distMobileBox.HTTPBox())))
-
 
 	http.HandleFunc("/", rootMiddleware)
 	http.HandleFunc("/dist_mobile", middleware(indexMobilePage))
@@ -45,6 +50,8 @@ func StartServer(port uint, access bool) error {
 	http.HandleFunc("/api/v1/file_operation", activeAuthMiddleware(FileOperationHandle))
 	http.HandleFunc("/api/v1/mkdir", activeAuthMiddleware(MkdirHandle))
 	http.HandleFunc("/api/v1/files", activeAuthMiddleware(fileList))
+
+	http.HandleFunc("/bd/", bdHandle)
 
 	http.Handle("/ws", websocket.Handler(WSHandler))
 	if access {

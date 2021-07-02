@@ -21,7 +21,6 @@ type SessionStore struct {
 	value            map[interface{}]interface{} //session 里面存储的值
 }
 
-
 //设置
 func (st *SessionStore) Set(key, value interface{}) error {
 	st.value[key] = value
@@ -37,7 +36,6 @@ func (st *SessionStore) Get(key interface{}) interface{} {
 	} else {
 		return nil
 	}
-	return nil
 }
 
 //删除
@@ -74,7 +72,6 @@ func (frommemory *FromMemory) SessionRead(sid string) (Session, error) {
 		sess, err := frommemory.SessionInit(sid)
 		return sess, err
 	}
-	return nil, nil
 }
 
 func (frommemory *FromMemory) SessionDestroy(sid string) error {

@@ -1,7 +1,7 @@
 Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
 Name: BaiduPCS-Go
 Maintainer: iikira <i@mail.iikira.com>
-Source: https://github.com/iikira/BaiduPCS-Go
+Source: https://github.com/Erope/BaiduPCS-Go
 
 Copyright: 2016-2019 iikira <i@mail.iikira.com>
 License: Apache-2.0+

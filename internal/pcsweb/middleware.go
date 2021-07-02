@@ -2,7 +2,7 @@ package pcsweb
 
 import (
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsconfig"
 	"net/http"
 )
 

@@ -5,21 +5,22 @@ import (
 	"container/list"
 	"encoding/hex"
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/baidupcs"
-	"github.com/iikira/BaiduPCS-Go/baidupcs/pcserror"
-	"github.com/iikira/BaiduPCS-Go/internal/pcscommand"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsconfig"
-	"github.com/iikira/BaiduPCS-Go/internal/pcsfunctions/pcsupload"
-	"github.com/iikira/BaiduPCS-Go/pcsutil"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/checksum"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/requester/rio"
-	"github.com/iikira/BaiduPCS-Go/requester/uploader"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Erope/BaiduPCS-Go/baidupcs"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/pcserror"
+	"github.com/Erope/BaiduPCS-Go/internal/pcscommand"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsconfig"
+	"github.com/Erope/BaiduPCS-Go/internal/pcsfunctions/pcsupload"
+	"github.com/Erope/BaiduPCS-Go/pcsutil"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/checksum"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/requester/rio"
+	"github.com/Erope/BaiduPCS-Go/requester/uploader"
 	"golang.org/x/net/websocket"
 )
 
@@ -56,7 +57,6 @@ const (
 	// StepUploadUpload 正常上传步骤
 	StepUploadUpload
 )
-
 
 // RunRapidUpload 执行秒传文件, 前提是知道文件的大小, md5, 前256KB切片的 md5, crc32
 func RunRapidUpload(targetPath, contentMD5, sliceMD5, crc32 string, length int64) {
@@ -149,19 +149,19 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 
 			subSavePath = strings.TrimPrefix(walkedFiles[k3], globedPathDir)
 
-				lastID++
-				ulist.PushBack(&utask{
-					ListTask: ListTask{
-						ID:       lastID,
-						MaxRetry: opt.MaxRetry,
-					},
-					localFileChecksum: checksum.NewLocalFileChecksum(walkedFiles[k3], int(baidupcs.SliceMD5Size)),
-					savePath:          path.Clean(savePath + baidupcs.PathSeparator + subSavePath),
-				})
+			lastID++
+			ulist.PushBack(&utask{
+				ListTask: ListTask{
+					ID:       lastID,
+					MaxRetry: opt.MaxRetry,
+				},
+				localFileChecksum: checksum.NewLocalFileChecksum(walkedFiles[k3], int(baidupcs.SliceMD5Size)),
+				savePath:          path.Clean(savePath + baidupcs.PathSeparator + subSavePath),
+			})
 
 			fmt.Printf("[%d] 加入上传队列: %s\n", lastID, walkedFiles[k3])
 			MsgBody = fmt.Sprintf("{\"LastID\": %d, \"path\": \"%s\"}", lastID, walkedFiles[k3])
-			sendResponse(conn, 3, 1, "添加进任务队列", MsgBody)
+			sendResponse(conn, 3, 1, "添加进任务队列", MsgBody, true, true)
 		}
 	}
 
@@ -172,7 +172,7 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 
 	uploadDatabase, err := pcsupload.NewUploadingDatabase()
 	if err != nil {
-		sendResponse(conn, 3, -1, "打开上传未完成数据库错误", "")
+		sendResponse(conn, 3, -1, "打开上传未完成数据库错误", "", true, true)
 		fmt.Printf("打开上传未完成数据库错误: %s\n", err)
 		return
 	}
@@ -210,14 +210,14 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 			if task.retry < task.MaxRetry {
 				task.retry++
 				MsgBody = fmt.Sprintf("{\"LastID\": %d, \"errManifest\": \"%s\", \"error\": \"%s\", \"retry\": %d, \"max_retry\": %d}", task.ID, errManifest, pcsError, task.retry, task.MaxRetry)
-				sendResponse(conn, 3, -2, "重试", MsgBody)
+				sendResponse(conn, 3, -2, "重试", MsgBody, true, true)
 				fmt.Printf("[%d] %s, %s, 重试 %d/%d\n", task.ID, errManifest, pcsError, task.retry, task.MaxRetry)
 				ulist.PushBack(task)
 				time.Sleep(3 * time.Duration(task.retry) * time.Second)
 			} else {
 				// on failed
 				fmt.Printf("[%d] %s, %s\n", task.ID, errManifest, pcsError)
-				sendResponse(conn, 3, -3, "上传任务失败", "")
+				sendResponse(conn, 3, -3, "上传任务失败", "", true, true)
 			}
 		}
 		totalSize int64
@@ -236,13 +236,13 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 		func() {
 			fmt.Printf("[%d] 准备上传: %s\n", task.ID, task.localFileChecksum.Path)
 			MsgBody = fmt.Sprintf("{\"LastID\": %d, \"path\": \"%s\"}", task.ID, task.localFileChecksum.Path)
-			sendResponse(conn, 3, 2, "准备上传", MsgBody)
+			sendResponse(conn, 3, 2, "准备上传", MsgBody, true, true)
 
 			err = task.localFileChecksum.OpenPath()
 			if err != nil {
 				fmt.Printf("[%d] 文件不可读, 错误信息: %s, 跳过...\n", task.ID, err)
 				MsgBody = fmt.Sprintf("{\"LastID\": %d, \"error\": \"%s\"}", task.ID, err)
-				sendResponse(conn, 3, -4, "文件不可读, 跳过", MsgBody)
+				sendResponse(conn, 3, -4, "文件不可读, 跳过", MsgBody, true, true)
 				return
 			}
 			defer task.localFileChecksum.Close() // 关闭文件
@@ -309,7 +309,7 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 							if bytes.Compare(decodedMD5, task.localFileChecksum.MD5) == 0 {
 								fmt.Printf("[%d] 目标文件, %s, 已存在, 跳过...\n", task.ID, task.savePath)
 								MsgBody = fmt.Sprintf("{\"LastID\": %d, \"savePath\": \"%s\"}", task.ID, task.savePath)
-								sendResponse(conn, 3, 3, "目标文件已存在, 跳过", MsgBody)
+								sendResponse(conn, 3, 3, "目标文件已存在, 跳过", MsgBody, true, true)
 								return
 							}
 						}
@@ -320,7 +320,7 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 				if pcsError == nil {
 					fmt.Printf("[%d] 秒传成功, 保存到网盘路径: %s\n\n", task.ID, task.savePath)
 					MsgBody = fmt.Sprintf("{\"LastID\": %d, \"savePath\": \"%s\"}", task.ID, task.savePath)
-					sendResponse(conn, 3, 3, "秒传成功", MsgBody)
+					sendResponse(conn, 3, 3, "秒传成功", MsgBody, true, true)
 					totalSize += task.localFileChecksum.Length
 					return
 				}
@@ -382,11 +382,11 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 					} else {
 						leftStr = (time.Duration((totalSize-uploaded)/(speeds)) * time.Second).String()
 					}
-					
+
 					var avgSpeed int64 = 0
-					timeUsed := status.TimeElapsed()/1e7*1e7
+					timeUsed := status.TimeElapsed() / 1e7 * 1e7
 					timeSecond := status.TimeElapsed().Seconds()
-					if(int64(timeSecond) > 0){
+					if int64(timeSecond) > 0 {
 						avgSpeed = uploaded / int64(timeSecond)
 					}
 
@@ -399,16 +399,16 @@ func RunUpload(conn *websocket.Conn, localPaths []string, savePath string, opt *
 					MsgBody = fmt.Sprintf("{\"LastID\": %d, \"uploaded_size\": \"%s\", \"total_size\": \"%s\", \"percent\": %.2f, \"speed\": \"%s\", \"avg_speed\": \"%s\", \"time_used\": \"%s\", \"time_left\": \"%s\"}", task.ID,
 						converter.ConvertFileSize(uploaded, 2),
 						converter.ConvertFileSize(totalSize, 2),
-						float64(uploaded) / float64(totalSize) * 100,
+						float64(uploaded)/float64(totalSize)*100,
 						converter.ConvertFileSize(speeds, 2),
 						converter.ConvertFileSize(avgSpeed, 2),
 						timeUsed, leftStr)
-					sendResponse(conn, 3, 4, "上传中", MsgBody)
+					sendResponse(conn, 3, 4, "上传中", MsgBody, true, true)
 				})
 				muer.OnSuccess(func() {
 					close(exitChan)
 					MsgBody = fmt.Sprintf("{\"LastID\": %d, \"savePath\": \"%s\"}", task.ID, task.savePath)
-					sendResponse(conn, 3, 5, "上传文件成功", MsgBody)
+					sendResponse(conn, 3, 5, "上传文件成功", MsgBody, true, true)
 
 					fmt.Printf("\n")
 					fmt.Printf("[%d] 上传文件成功, 保存到网盘路径: %s\n", task.ID, task.savePath)

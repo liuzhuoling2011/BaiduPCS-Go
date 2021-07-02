@@ -1,7 +1,7 @@
 package uploader
 
 import (
-	"github.com/iikira/BaiduPCS-Go/requester/rio"
+	"github.com/Erope/BaiduPCS-Go/requester/rio"
 	"sync/atomic"
 )
 

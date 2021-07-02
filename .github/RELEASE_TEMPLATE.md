@@ -1,7 +1,7 @@
 # 更新日志: 
 
 1. 新增上传、下载设置限速
-2. 优化Windows下载大文件时的处理性能, [点此查看详情和设置方法](https://github.com/iikira/BaiduPCS-Go/wiki/Windows%E5%A6%82%E4%BD%95%E5%BC%80%E5%90%AF%E4%BC%98%E5%8C%96%E4%B8%8B%E8%BD%BD%E5%A4%A7%E6%96%87%E4%BB%B6%E6%97%B6%E7%9A%84%E5%A4%84%E7%90%86%E6%80%A7%E8%83%BD)
+2. 优化Windows下载大文件时的处理性能, [点此查看详情和设置方法](https://github.com/Erope/BaiduPCS-Go/wiki/Windows%E5%A6%82%E4%BD%95%E5%BC%80%E5%90%AF%E4%BC%98%E5%8C%96%E4%B8%8B%E8%BD%BD%E5%A4%A7%E6%96%87%E4%BB%B6%E6%97%B6%E7%9A%84%E5%A4%84%E7%90%86%E6%80%A7%E8%83%BD)
 3. 更新下载器
 4. 多处bug修复
 

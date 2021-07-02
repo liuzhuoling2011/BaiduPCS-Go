@@ -3,11 +3,11 @@ package baidupcs
 import (
 	"bytes"
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/baidupcs/netdisksign"
-	"github.com/iikira/BaiduPCS-Go/baidupcs/pcserror"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/requester/multipartreader"
-	"github.com/iikira/baidu-tools/tieba"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/netdisksign"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/pcserror"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/requester/multipartreader"
+	"github.com/Erope/baidu-tools/tieba"
 	"github.com/json-iterator/go"
 	"io"
 	"net/http"
@@ -579,8 +579,10 @@ func (pcs *BaiduPCS) PrepareSharePSet(paths []string, period int) (dataReadClose
 
 	dataReadCloser, panError = pcs.sendReqReturnReadCloser(reqTypePan, OperationShareSet, http.MethodPost, panURL.String(), map[string]string{
 		"path_list":    mergeStringList(paths...),
-		"schannel":     "0",
+		"schannel":     "4",
 		"channel_list": "[]",
+		"public":       "0",
+		"pwd":          "pass",
 		"period":       strconv.Itoa(period),
 	}, map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",

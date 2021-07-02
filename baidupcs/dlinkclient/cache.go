@@ -1,8 +1,8 @@
 package dlinkclient
 
 import (
-	"github.com/iikira/BaiduPCS-Go/baidupcs/expires"
-	"github.com/iikira/BaiduPCS-Go/baidupcs/pcserror"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/expires"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/pcserror"
 	"strconv"
 	"time"
 )

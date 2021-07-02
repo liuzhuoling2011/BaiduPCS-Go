@@ -1,7 +1,7 @@
 package cachemap
 
 import (
-	"github.com/iikira/BaiduPCS-Go/baidupcs/expires"
+	"github.com/Erope/BaiduPCS-Go/baidupcs/expires"
 )
 
 func (cm *CacheOpMap) CacheOperation(op string, key interface{}, opFunc func() expires.DataExpires) (data expires.DataExpires) {

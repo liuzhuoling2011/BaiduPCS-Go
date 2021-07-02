@@ -2,7 +2,7 @@ package escaper_test
 
 import (
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/escaper"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/escaper"
 	"testing"
 )
 

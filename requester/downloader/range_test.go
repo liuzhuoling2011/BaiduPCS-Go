@@ -2,7 +2,7 @@ package downloader_test
 
 import (
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/requester/downloader"
+	"github.com/Erope/BaiduPCS-Go/requester/downloader"
 	"testing"
 )
 

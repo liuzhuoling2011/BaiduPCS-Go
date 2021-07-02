@@ -1,8 +1,8 @@
 package pcsweb
 
 import (
-	"github.com/iikira/BaiduPCS-Go/internal/pcscommand"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/internal/pcscommand"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
 	"html/template"
 	"io/ioutil"
 	"os"

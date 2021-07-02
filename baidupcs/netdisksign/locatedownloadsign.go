@@ -3,8 +3,8 @@ package netdisksign
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/cachepool"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/cachepool"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
 	"strconv"
 	"time"
 )

@@ -1,6 +1,6 @@
 Package: BaiduPCS-Go
 Version: 3.6
-Homepage: https://github.com/iikira/BaiduPCS-Go
+Homepage: https://github.com/Erope/BaiduPCS-Go
 Section: utils
 Priority: optional
 Architecture: amd64

@@ -2,8 +2,8 @@ package uploader
 
 import (
 	"fmt"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/converter"
-	"github.com/iikira/BaiduPCS-Go/requester/rio"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/converter"
+	"github.com/Erope/BaiduPCS-Go/requester/rio"
 )
 
 // DoUpload 执行上传

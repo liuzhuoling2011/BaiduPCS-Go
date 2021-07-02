@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/iikira/BaiduPCS-Go/pcsutil"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/cachepool"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/prealloc"
-	"github.com/iikira/BaiduPCS-Go/pcsutil/waitgroup"
-	"github.com/iikira/BaiduPCS-Go/pcsverbose"
-	"github.com/iikira/BaiduPCS-Go/requester"
-	"github.com/iikira/BaiduPCS-Go/requester/rio/speeds"
-	"github.com/iikira/BaiduPCS-Go/requester/transfer"
+	"github.com/Erope/BaiduPCS-Go/pcsutil"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/cachepool"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/prealloc"
+	"github.com/Erope/BaiduPCS-Go/pcsutil/waitgroup"
+	"github.com/Erope/BaiduPCS-Go/pcsverbose"
+	"github.com/Erope/BaiduPCS-Go/requester"
+	"github.com/Erope/BaiduPCS-Go/requester/rio/speeds"
+	"github.com/Erope/BaiduPCS-Go/requester/transfer"
 )
 
 const (
